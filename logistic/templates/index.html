@@ -1,0 +1,187 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% block title %}Logistics{% endblock %}
+{% block content %}
+{% verbatim %}
+<div ng-app="myApp" ng-controller="myCtrl">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Logistics</h1>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Logistics Rate</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-3">
+                    <md-input-container class="md-block inputcontainer">
+                        <label>Source City</label>
+                        <md-select md-container-class="popup_select"
+                                   ng-required="true"
+                                   ng-change="rate_calc()"
+                                   ng-model="source">
+                            <md-option ng-repeat="y in source_city" ng-value="y.id">
+                                {{y.city}} {{y.part}}
+                            </md-option>
+                        </md-select>
+                    </md-input-container>
+
+                </div>
+                <div class="col-3">
+                    <md-input-container class="md-block inputcontainer">
+                        <label>Destination City</label>
+                        <md-select md-container-class="popup_select"
+                                   ng-required="true"
+                                   ng-change="rate_calc()"
+                                   ng-model="destination">
+                            <md-option ng-repeat="y in destination_city" ng-value="y.id">
+                                {{y.city}} {{y.part}}
+                            </md-option>
+                        </md-select>
+                    </md-input-container>
+                </div>
+                <div class="col-3">
+                    <md-input-container>
+                        <label>Weight</label>
+                        <input maxlength="30"
+                               ng-model="weight"
+                               ng-blur="rate_calc()"
+                               placeholder="Weight"
+                               type="text"/>
+                    </md-input-container>
+                </div>
+            </div>
+            <br/>
+            <div class="row">
+                <div class="col-3">
+                    <p>Zone :</p>
+                    <h3>{{zone}}</h3>
+                </div>
+                <div class="col-3">
+                    <p>Rate :</p>
+                    <h3>{{rate}}</h3>
+                </div>
+                <div class="col-1">
+                    <button type="submit" ng-click="logisticsubmit()"
+                            class="btn btn-primary btn-block">Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- /.card-body -->
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+            <tr>
+                <th scope="col">Source</th>
+                <th scope="col">Destination</th>
+                <th scope="col">Zone</th>
+                <th scope="col">Weight</th>
+                <th scope="col">Rate</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="data in summary">
+                <td>{{data.source_name}}</td>
+                <td>{{data.destination_name}}</td>
+                <td>{{data.zone}}</td>
+                <td>{{data.weight}}</td>
+                <td>{{data.rate}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endverbatim %}
+<script>
+var app = angular.module('myApp', ['ngMaterial','ui.bootstrap']);
+app.controller('myCtrl', function($scope, logisticservice,$window, $filter,$mdDialog) {
+    $scope.zone = 0;
+    $scope.rate = 0;
+
+    $scope.rate_calc = function(){
+        if ($scope.source != undefined && $scope.destination != undefined && $scope.weight != undefined){
+            var data = {
+                "source":$scope.source,
+                "destination":$scope.destination,
+                "weight":$scope.weight
+            }
+            var check = logisticservice.logistic_logic(data)
+            check.then(function(result) {
+                if(result.data.status=="success"){
+                    $scope.zone = result.data.message.zone;
+                    $scope.rate = result.data.message.rate;
+                }
+                else{
+                    alert(result.data.message);
+                    $scope.zone = 0;
+                    $scope.rate = 0;
+                }
+            });
+        }
+    }
+
+    $scope.logisticsubmit = function(){
+        if ($scope.source != undefined && $scope.destination != undefined && $scope.weight != undefined){
+            var data = {
+                "source":$scope.source,
+                "destination":$scope.destination,
+                "weight":$scope.weight,
+                "zone":$scope.zone,
+                "rate":$scope.rate
+            }
+            var check = logisticservice.logistic_submit(data)
+            check.then(function(result) {
+                if(result.data.status=="success"){
+                    alert(result.data.status);
+                    loaddata();
+                }
+                else{
+                    alert(result.data.message);
+                }
+            });
+        }
+    }
+
+    loaddata()
+    function loaddata(){
+        var check = logisticservice.summary()
+        check.then(function(result) {
+            $scope.summary = result.data.data;
+        });
+    }
+    loadcity()
+    function loadcity(){
+        var check = logisticservice.city_drop()
+        check.then(function(result) {
+            $scope.source_city = result.data.data;
+            $scope.destination_city = result.data.data;
+        });
+    }
+});
+app.service("logisticservice", function($http) {
+    this.logistic_logic = function(data) {
+        var response = $http.post("/logistic/logic",data);
+        return response;
+    }
+    this.logistic_submit = function(data) {
+        var response = $http.post("/logistic/submit",data);
+        return response;
+    }
+    this.summary = function(data) {
+        var response = $http.get("/logistic/submit");
+        return response;
+    }
+    this.city_drop = function(data) {
+        var response = $http.get("/logistic/city");
+        return response;
+    }
+});
+
+
+
+</script>
+
+{% endblock %}
