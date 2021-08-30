@@ -4,6 +4,7 @@ class Logistics_Response:
     id = None
     city = None
     part = None
+    part_name = None
     source = None
     source_name = None
     destination = None
@@ -26,6 +27,9 @@ class Logistics_Response:
 
     def set_part(self, part):
         self.part = part
+
+    def set_partname(self, part_name):
+        self.part_name = part_name
 
     def set_source(self, source):
         self.source = source
@@ -62,6 +66,9 @@ class Logistics_Response:
 
     def get_part(self):
         return self.part
+
+    def get_partname(self):
+        return self.part_name
 
     def get_source(self):
         return self.source

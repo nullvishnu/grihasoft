@@ -14,31 +14,48 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-3">
-                    <md-input-container class="md-block inputcontainer">
-                        <label>Source City</label>
-                        <md-select md-container-class="popup_select"
-                                   ng-required="true"
-                                   ng-change="rate_calc()"
-                                   ng-model="source">
-                            <md-option ng-repeat="y in source_city" ng-value="y.id">
-                                {{y.city}} {{y.part}}
-                            </md-option>
-                        </md-select>
-                    </md-input-container>
-
+                    <label>Source City</label>
+                    <md-autocomplete
+                            md-item-text="x.city"
+                            md-items="x in sourchsearch(tour.searchemp)"
+                            md-min-length=0
+                            md-no-cache="true"
+                            md-clear-button="true"
+                            md-search-text="searchsource"
+                            md-selected-item="selectedsource"
+                            md-selected-item-change="rate_calc()"
+                            ng-required="true"
+                            md-input-name="source"
+                            placeholder="Source City">
+                        <md-item-template>
+                            <span md-highlight-text="searchText"> {{x.city}}  - {{x.part_name}}</span>
+                        </md-item-template>
+                        <md-not-found>
+                            No Source City matching "{{x.searchsource}}" were found.
+                        </md-not-found>
+                    </md-autocomplete>
                 </div>
                 <div class="col-3">
-                    <md-input-container class="md-block inputcontainer">
-                        <label>Destination City</label>
-                        <md-select md-container-class="popup_select"
-                                   ng-required="true"
-                                   ng-change="rate_calc()"
-                                   ng-model="destination">
-                            <md-option ng-repeat="y in destination_city" ng-value="y.id">
-                                {{y.city}} {{y.part}}
-                            </md-option>
-                        </md-select>
-                    </md-input-container>
+                    <label>Source City</label>
+                    <md-autocomplete
+                            md-item-text="y.city"
+                            md-items="y in destsearch(tour.searchemp)"
+                            md-min-length=0
+                            md-no-cache="true"
+                            md-clear-button="true"
+                            md-search-text="searchdest"
+                            md-selected-item="selecteddest"
+                            md-selected-item-change="rate_calc()"
+                            ng-required="true"
+                            md-input-name="destination"
+                            placeholder="Destination City">
+                        <md-item-template>
+                            <span md-highlight-text="searchText"> {{y.city}}  - {{y.part_name}}</span>
+                        </md-item-template>
+                        <md-not-found>
+                            No Destination City matching "{{y.searchdest}}" were found.
+                        </md-not-found>
+                    </md-autocomplete>
                 </div>
                 <div class="col-3">
                     <md-input-container>
@@ -102,10 +119,10 @@ app.controller('myCtrl', function($scope, logisticservice,$window, $filter,$mdDi
     $scope.rate = 0;
 
     $scope.rate_calc = function(){
-        if ($scope.source != undefined && $scope.destination != undefined && $scope.weight != undefined){
+        if ($scope.selectedsource != undefined && $scope.selecteddest != undefined && $scope.weight != undefined){
             var data = {
-                "source":$scope.source,
-                "destination":$scope.destination,
+                "source":$scope.selectedsource.part,
+                "destination":$scope.selecteddest.part,
                 "weight":$scope.weight
             }
             var check = logisticservice.logistic_logic(data)
@@ -124,10 +141,10 @@ app.controller('myCtrl', function($scope, logisticservice,$window, $filter,$mdDi
     }
 
     $scope.logisticsubmit = function(){
-        if ($scope.source != undefined && $scope.destination != undefined && $scope.weight != undefined){
+        if ($scope.selectedsource != undefined && $scope.selecteddest != undefined && $scope.weight != undefined){
             var data = {
-                "source":$scope.source,
-                "destination":$scope.destination,
+                "source":$scope.selectedsource.id,
+                "destination":$scope.selecteddest.id,
                 "weight":$scope.weight,
                 "zone":$scope.zone,
                 "rate":$scope.rate
@@ -160,6 +177,22 @@ app.controller('myCtrl', function($scope, logisticservice,$window, $filter,$mdDi
             $scope.destination_city = result.data.data;
         });
     }
+    $scope.sourchsearch = gotosource;
+        function gotosource(query) {
+            var result = $filter('filter')($scope.source_city, {
+                'city': query
+            });
+            return result;
+    }
+
+    $scope.destsearch = gotodest;
+        function gotodest(query) {
+            var result = $filter('filter')($scope.destination_city, {
+                'city': query
+            });
+            return result;
+    }
+
 });
 app.service("logisticservice", function($http) {
     this.logistic_logic = function(data) {

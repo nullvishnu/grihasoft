@@ -5,6 +5,7 @@ import logistic.service.logistic_service
 from logistic.models import City,Logistics,Zone,Rate
 from logistic.data.response.logistics import Logistics_Response
 from grihasoft.message import Message,SuccessMessage,SuccessStatus,ErrorMessage
+from logistic.util.logistic_util import City_Part
 
 class Logistics_Service:
     def insert_logistics(self ,request_obj,obj,userid):
@@ -74,8 +75,9 @@ class Logistics_Service:
     def insert_city(self ,request_obj,obj,userid):
         if 'id' in obj:
             try:
+                part = City_Part.get_id(self, obj['part'])
                 city = City.objects.filter(id=obj['id']).update(name=obj['name'],
-                                                                    part = obj['part'],
+                                                                    part = part,
                                                                     updated_by = userid)
             except Exception as e:
                 print(e)
@@ -87,14 +89,15 @@ class Logistics_Service:
 
             msg_obj = Message()
             msg_obj.set_status(SuccessStatus.SUCCESS)
-            msg_obj.set_message({"cityid":city.id})
+            msg_obj.set_message({"cityid":city})
             return msg_obj
 
         else:
             try:
+                part = City_Part.get_id(self,obj['part'])
                 city = City.objects.create(
                     name=obj['name'],
-                    part = obj['part'],
+                    part = part,
                     create_by = userid,
                     status = 1)
             except Exception as e:
@@ -127,7 +130,7 @@ class Logistics_Service:
 
             msg_obj = Message()
             msg_obj.set_status(SuccessStatus.SUCCESS)
-            msg_obj.set_message({"zoneid":zone.id})
+            msg_obj.set_message({"zoneid":zone})
             return msg_obj
 
         else:
@@ -168,7 +171,7 @@ class Logistics_Service:
 
             msg_obj = Message()
             msg_obj.set_status(SuccessStatus.SUCCESS)
-            msg_obj.set_message({"rateid":rate.id})
+            msg_obj.set_message({"rateid":rate})
             return msg_obj
 
         else:
@@ -204,6 +207,7 @@ class Logistics_Service:
             req_data = Logistics_Response()
             req_data.set_id(i.id)
             req_data.set_city(i.name)
+            req_data.set_partname(City_Part.get_part(self, int(i.part)))
             req_data.set_part(i.part)
             req_data.set_status(i.status)
             ar.append(json.loads(req_data.get()))
@@ -218,9 +222,9 @@ class Logistics_Service:
             req_data = Logistics_Response()
             req_data.set_id(i.id)
             req_data.set_source(i.source)
-            req_data.set_sourcename(logistic.service.logistic_service.Logistics_Service.get_cityid(self, i.source))
+            req_data.set_sourcename(City_Part.get_part(self, i.source))
             req_data.set_destination(i.destination)
-            req_data.set_destinationname(logistic.service.logistic_service.Logistics_Service.get_cityid(self,i.destination))
+            req_data.set_destinationname(City_Part.get_part(self,i.destination))
             req_data.set_zone(i.zone)
             req_data.set_status(i.status)
             ar.append(json.loads(req_data.get()))
